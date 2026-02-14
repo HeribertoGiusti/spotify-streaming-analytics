@@ -5,11 +5,10 @@
 [![BigQuery](https://img.shields.io/badge/BigQuery-4285F4?style=flat&logo=google-cloud&logoColor=white)](https://cloud.google.com/bigquery)
 [![Tableau](https://img.shields.io/badge/Tableau-E97627?style=flat&logo=tableau&logoColor=white)](https://www.tableau.com/)
 [![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
-[![SQL](https://img.shields.io/badge/SQL-4479A1?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
 ## 📊 Project Overview
 
-Analysis of Spotify streaming history to uncover listening patterns, content engagement drivers, and behavioral insights using advanced analytics techniques.
+Analysis of my Spotify streaming history to uncover listening patterns and behavioral insights using advanced analytics techniques.
 
 **Key Focus Areas:**
 - 🎯 User engagement and retention metrics
@@ -26,8 +25,8 @@ Analysis of Spotify streaming history to uncover listening patterns, content eng
 | **Data Warehouse** | BigQuery |
 | **Analytics** | SQL (Window Functions, CTEs, Subqueries) |
 | **Scripting** | Python 3.x |
-| **Visualization** | Tableau Desktop |
-| **Version Control** | Git & GitHub |
+| **Visualization** | Tableau |
+| **Version Control** | GitHub |
 
 ## 📁 Project Structure
 ```
@@ -51,15 +50,15 @@ spotify-streaming-analytics/
 ### Prerequisites
 - Google Cloud Platform account
 - BigQuery dataset access
-- Tableau Desktop (for visualization)
+- Tableau Desktop
 - Python 3.8+
 
 ### Data Pipeline
 
 1. **Data Ingestion**: Spotify JSON exports → Cloud Storage
-2. **Transformation**: JSON arrays → JSONL format (newline-delimited)
+2. **Transformation**: JSON arrays → JSONL format
 3. **Loading**: JSONL → BigQuery table
-4. **Analytics**: SQL transformations → analytical tables
+4. **Analytics**: SQL transformations → Analytical tables
 5. **Visualization**: BigQuery → Tableau dashboards
 
 See [Data Pipeline Documentation](docs/data_pipeline.md) for details.
@@ -95,10 +94,9 @@ See [Data Pipeline Documentation](docs/data_pipeline.md) for details.
 
 ## 👤 Author
 
-**[Tu Nombre]**
-- LinkedIn: [Tu perfil]
-- Portfolio: [Tu sitio web]
-- Email: tu_email@example.com
+**Heriberto Giusti**
+- LinkedIn: https://www.linkedin.com/in/heriberto-giusti-4389b2298/
+- Email: heribertogiusti@gmail.com
 
 ---
 

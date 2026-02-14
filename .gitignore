@@ -1,0 +1,19 @@
+# Datos personales (NO subir a GitHub)
+*.json
+*.jsonl
+data/
+
+# Credenciales de Google Cloud
+credentials/
+*-key.json
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Sistema operativo
+.DS_Store
+
+# Archivos temporales de Tableau
+*.twb~
+*.twbx~
