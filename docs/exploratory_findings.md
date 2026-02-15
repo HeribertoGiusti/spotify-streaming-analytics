@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-[Analysis of Spotify streaming history reveals a strong preference for discovery-driven listening, with 72% of songs being played using shuffle mode. Session continuity is remarkably high, with 95% of consecutive plays occurring within 30 minutes, indicating deep engagement. However, data quality issues were identified: duplicate records across key columns, and anomalous listening volumes in December 2020 (exceeding 24 hours/day) require correction before creating analytical tables to ensure accurate insights.]
+Analysis of Spotify streaming history reveals a strong preference for discovery-driven listening, with 72% of songs being played using shuffle mode. Session continuity is remarkably high, with 95% of consecutive plays occurring within 30 minutes, indicating deep engagement. However, data quality issues were identified: duplicate records across key columns, and anomalous listening volumes in December 2020 (exceeding 24 hours/day) require correction before creating analytical tables to ensure accurate insights.
 
 ---
 
@@ -16,23 +16,23 @@
 ### 1.1 Total Records and Date Range
 
 **Results:**
-- Total Records: [266,106]
-- Date Range: [22-09-2013] to [10-02-2026]
-- Days of Data: [4,523]
-- Average Plays per Day: [58.8]
+- Total Records: 266,106
+- Date Range: 22-09-2013 to 10-02-2026
+- Days of Data: 4,523
+- Average Plays per Day: 58.8
 
 **Interpretation:**
-[Over the span of 12 years I've played more than a quarter of a million songs, nearly 60 per day. This is consistent with my lifetime love for music.]
+Over the span of 12 years I've played more than a quarter of a million songs, nearly 60 per day. This is consistent with my lifetime love for music.
 
 ### 1.2 Null Value Analysis
 
 **Results:**
-- Track Names: [0.02%] null
-- Episode Names: [99.98%] null
-- Audiobook Names: [100%] null
+- Track Names: 0.02% null
+- Episode Names: 99.98% null
+- Audiobook Names: 100% null
 
 **Interpretation:**
-- [The proportion of null values across the playing categories is as expected.]
+- The proportion of null values across the playing categories is as expected.
 
 ### 1.3 Content Type Distribution
 
@@ -43,16 +43,16 @@
 | Podcast      |      48 |        589    |  12.26 min   |
 
 **Interpretation:**
-[Although the amount of music playing is predominant over podcasts, the average time of the sessions is higher in the second ones. This is as expected.]
+Although the amount of music playing is predominant over podcasts, the average time of the sessions is higher in the second ones. This is as expected.
 
 ### 1.4 Duplicate Detection
 
 **Results:**
-- Exact duplicates in all relevant fields: [1,741] duplicates
-- Same track played at exact same timestamp: [3,690] duplicates
+- Exact duplicates in all relevant fields: 1,741 duplicates
+- Same track played at exact same timestamp: 3,690 duplicates
 
 **Interpretation:**
-[This is an important discovery since it affects the data quality. Both categories of duplicates will be removed from the analytical tables.]
+This is an important discovery since it affects the data quality. Both categories of duplicates will be removed from the analytical tables.
 
 ---
 
@@ -61,7 +61,7 @@
 ### 2.1 Plays by Year and Month
 
 **Results:**
-[On a surface level analysis, it seems that, aside from the first year, every month since then has had most of its days active with music.]
+On a surface level analysis, it seems that, aside from the first year, every month since then has had most of its days active with music.
 
 ### 2.2 Plays by Day of Week
 
@@ -77,22 +77,22 @@
 |  Sunday     |  36,700  |
 
 **Interpretation:**
-[There seems to be no major difference in plays throughout the week.]
+There seems to be no major difference in plays throughout the week.
 
 ### 2.3 Plays by Hour of Day
 
 **Top 3 Hours:**
-1. 05:00 PM MST - [18,906] plays
-2. 06:00 PM MST - [17,948] plays
-3. 12:00 PM MST - [16,935] plays
+1. 05:00 PM MST - 18,906 plays
+2. 06:00 PM MST - 17,948 plays
+3. 12:00 PM MST - 16,935 plays
 
 **Bottom 3 Hours:**
-22. 02:00 AM MST - [1,364] plays
-23. 03:00 AM MST - [1,292] plays
-24. 04:00 AM MST - [1,060] plays
+22. 02:00 AM MST - 1,364 plays
+23. 03:00 AM MST - 1,292 plays
+24. 04:00 AM MST - 1,060 plays
 
 **Interpretation:**
-[The results show that I listen to more music at the end of the working day, and I almost never do it after midnight.]
+The results show that I listen to more music at the end of the working day, and I almost never do it after midnight.
 
 ---
 
@@ -115,7 +115,7 @@
 | 10   | System of a Down      |  2,543 |  64.3 |   26.4%   |
 
 **Interpretation:**
-- Top 10 represent [19]% of total music listening, which is not that high and suggests that the plays are somewhat distributed across many artists.
+- Top 10 represent 19% of total music listening, which is not that high and suggests that the plays are somewhat distributed across many artists.
 - The skip rate is unexpectedly high in most of the top artists, which suggests that many of their songs have been progressively ignored because I've listened to them until exhaustion.
 
 ### 3.2 Top 10 Tracks by Plays
@@ -169,7 +169,7 @@
 ### 5.2 Skip Behavior Analysis
 
 **Results:**
-- Overall Skip Rate: [19.44]%
+- Overall Skip Rate: 19.44%
 - The average minutes per played when skip are 0.76.
 
 **Interpretation:**
@@ -178,19 +178,19 @@
 ### 5.3 Shuffle Mode Usage
 
 **Results:**
-- Shuffle ON: [72.78]% of plays
-- Shuffle OFF: [27.22]% of plays
+- Shuffle ON: 72.78% of plays
+- Shuffle OFF: 27.22% of plays
 
 **Interpretation:**
-[I'm a user that's heavily influenced by discovery and unpredictability, instead of a strict control of my listening sequence.]
+I'm a user that's heavily influenced by discovery and unpredictability, instead of a strict control of my listening sequence.
 
 ### 5.4 Online vs Offline Listening
 
 **Results:**
-- Offline plays: [10.73]%
+- Offline plays: 10.73%
 
 **Interpretation:**
-[Since I spend most of my days in places with WiFi, most probably these plays were when doing some trip abroad.]
+Since I spend most of my days in places with WiFi, most probably these plays were when doing some trip abroad.
 
 ---
 
@@ -212,17 +212,17 @@
 | Peppermoth    |  239  |       1       |     239.0     |
 
 **Interpretation:**
-[Sambomaster's Seishun Kyousoukyoku opened the fascinating world of japanese rock to me with its appearance in Naruto, but I haven't explored other things by the artist since. On the other hand, Miller's For the Love of Freedom and Peppermoth's Carousel are obscure tracks that make me feel a deep sense of wonder and relaxation, and thus I return to them with consistency.]
+Sambomaster's Seishun Kyousoukyoku opened the fascinating world of japanese rock to me with its appearance in Naruto, but I haven't explored other things by the artist since. On the other hand, Miller's For the Love of Freedom and Peppermoth's Carousel are obscure tracks that make me feel a deep sense of wonder and relaxation, and thus I return to them with consistency.
 
 ### 6.3 Session Length Estimation
 
 **Time Gap Distribution:**
-- 0-5 min: [86.4]% (continuous listening)
-- 5-30 min: [6.8]% (short breaks)
-- 30+ min: [6.8]% (new sessions)
+- 0-5 min: 86.4% (continuous listening)
+- 5-30 min: 6.8% (short breaks)
+- 30+ min: 6.8% (new sessions)
 
 **Interpretation:**
-[The new sessions treshold was put at 30 minutes because nearly 95% of the plays occur within that period. When a couple of songs are played further apart, it's most probably a different long session altogether.]
+The new sessions treshold was put at 30 minutes because nearly 95% of the plays occur within that period. When a couple of songs are played further apart, it's most probably a different long session altogether.
 
 ---
 
@@ -239,24 +239,24 @@
 | Very old timestamps    |   0   |
 
 **Interpretation:**
-[There doesn't seem to be anomalous data points. In the case of the longer play durations, it is most probably due to a very long track like a whole concert.]
+There doesn't seem to be anomalous data points. In the case of the longer play durations, it is most probably due to a very long track like a whole concert.
 
 ### 7.2 Missing Critical Fields
 
 **Results:**
-- Records with no track name AND no episode name: [0] missing
+- Records with no track name AND no episode name: 0 missing
 
 **Interpretation:**
-[The data is complete.]
+The data is complete.
 
 ---
 
 ## 8. Surprising Discoveries
 
-1. [An unexpected discovery was that 72.3% of my songs begin playing with the shuffle mode on, which indicates a marked preference for newness and diversity.]
-2. [A curious pattern is that, when I begin a music session, nearly 95% of the times I take none or very short breaks between songs, with only about 5% of contiguous song being played more than 30 minutes apart.]
-3. [An interesting finding is that several rows are duplicated on the most important columns, which may generate distortions on the analytical tables if not corrected.]
-4. [There's also a potential technical problem on days 7 and 8 of December 2020, because the total amount of listening hours are very high, with one day surpassing the 24 hour limit.]
+1. An unexpected discovery was that 72.3% of my songs begin playing with the shuffle mode on, which indicates a marked preference for newness and diversity.
+2. A curious pattern is that, when I begin a music session, nearly 95% of the times I take none or very short breaks between songs, with only about 5% of contiguous song being played more than 30 minutes apart.
+3. An interesting finding is that several rows are duplicated on the most important columns, which may generate distortions on the analytical tables if not corrected.
+4. There's also a potential technical problem on days 7 and 8 of December 2020, because the total amount of listening hours are very high, with one day surpassing the 24 hour limit.
 
 ---
 
@@ -272,4 +272,4 @@ Based on exploratory findings:
 
 ## 10. Data Limitations & Caveats
 
-- [Aside from the duplicated registers, there seems to be no other data problems.]
+- Aside from the duplicated registers, there seems to be no other data problems.
