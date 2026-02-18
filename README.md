@@ -15,7 +15,6 @@ Analysis of my Spotify streaming history to uncover listening patterns and behav
 - 📈 Temporal pattern analysis (hourly, daily, seasonal trends)
 - 🎼 Content performance and discovery patterns
 - 🔄 Session construction and listening behavior
-- 📱 Platform and device usage analysis
 
 ## 🛠️ Tech Stack
 
@@ -33,7 +32,9 @@ Analysis of my Spotify streaming history to uncover listening patterns and behav
 spotify-streaming-analytics/
 ├── sql/                              # BigQuery SQL queries
 │   ├── 01_exploratory_analysis.sql   # Initial data exploration
-│   └── 02_analytics_transformations.sql # Advanced transformations
+|   ├── 02_data_cleaning_silver.sql   # Creation of clean table
+|   ├── 03_sessions.sql   # Creation of sessions table
+│   └── 04_analytics_transformations.sql # Advanced transformations
 ├── python/                           # Data processing scripts
 │   └── convert_to_jsonl.py          # JSON to JSONL converter
 ├── docs/                            # Documentation
