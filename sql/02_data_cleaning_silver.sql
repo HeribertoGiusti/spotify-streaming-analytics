@@ -7,30 +7,30 @@
 --
 -- BUSINESS RATIONALE:
 --   EDA identified duplicate records that could distort analytics, alongside other anomalies. These are here removed.
---   Also, "defensive programming" conditions were applied on the WHERE clause because, even though EDA showed no current problem, there could be one if the project scales and new data is added.
+--   Also, "defensive programming" conditions were applied on the first WHERE clause because, even though EDA showed no current problem, there could be one if the project scales and new data is added.
 --   This silver table ensures data quality for any downstream analysis.
 --
 -- DEDUPLICATION LOGIC:
 --   Removes exact duplicates based on:
---   - Same ts
---   - Same track URI
---   - Same play duration
+--   - Same ts, same track URI and same play duration
 --   - Keeps first occurrence based on row partition order
 --   - Using URI instead of track name allows for handling for tracks with identical names by different artists, or different versions with same title
 --
 -- ADDITIONAL CLEANING:
---   - Excludes December 2020 anomalies (>24 hours/day)
---   - Filters out impossible values
---   - Standardizes NULL handling
+--   - Focuses on music by standardizing NULL handling for other type of streams
+--   - Filters out impossible time values
+--   - Excludes December 2020 anomaly: >24 hours/day
+--   - Omits tracks with immediate skip because of 'ts' register bug they create
+--   - Leaves out tracks that display severe overlap in ending-to-start times for same-device sessions
 --
 -- DEPENDENCIES:
 --   Input: `spotify_analytics.streaming_history_raw`
 --   Output: `spotify_analytics.streaming_history_clean`
 --
--- LAST UPDATED: 2025-02-15
+-- LAST UPDATED: 2026-02-22
 -- ================================================================
 
--- Create clean silver table for music only
+-- Creates clean silver table for music only
 CREATE OR REPLACE TABLE `robotic-door-487416-b4.spotify_analytics.streaming_history_clean` AS
 
 WITH music_only AS (
@@ -45,9 +45,9 @@ WITH music_only AS (
     
     -- Data quality filters
     AND ts IS NOT NULL
-    AND ms_played > 0
-    AND DATE(ts) >= '2013-09-23'  -- First ever listening session in UTC  
-    
+    AND ms_played >= 1000  -- Leaves out immediate skips (ts register bug identified in /docs/problems_session_construction.md)
+    AND DATE(ts) >= '2013-09-23'  -- First ever listening session in UTC
+
     -- Exclude December 2020 anomalies identified in EDA
     AND NOT (DATE(ts) BETWEEN '2020-12-07' AND '2020-12-08')
 ),
@@ -57,7 +57,7 @@ deduplicated AS (
     *,
     ROW_NUMBER() OVER (
       PARTITION BY 
-        ts,                    -- Exact timestamp
+        ts,                    -- Exact ending timestamp
         spotify_track_uri,     -- Unique track identifier (most precise)
         ms_played              -- Distinguish replays with different duration
       ORDER BY ts
@@ -66,15 +66,19 @@ deduplicated AS (
 )
 
 SELECT 
-  -- Core fields for final silver table
-  DATETIME(ts, "UTC-7") AS dt_MST,  -- This is because I've spent most of my time in -7 MST
+  -- Time information
+  TIMESTAMP_TRUNC(TIMESTAMP_SUB(ts, INTERVAL ms_played MILLISECOND), SECOND, 'America/Mazatlan') AS play_start_MST,  -- This is because I've spent most of my time in -7 MST,
+  TIMESTAMP_TRUNC(ts, SECOND, 'America/Mazatlan') AS play_end_MST,
   ms_played,
-  
+
   -- Music metadata
   master_metadata_track_name AS track_name,
   master_metadata_album_artist_name AS artist_name,
   master_metadata_album_album_name AS album_name,
   spotify_track_uri AS track_uri,
+
+  -- Device
+  platform AS device,
   
   -- Playback context
   reason_start,
@@ -86,17 +90,16 @@ SELECT
   incognito_mode AS incognito_flag,
   
   -- Derived temporal fields
-  DATE(DATETIME(ts, "UTC-7")) AS play_date,
-  EXTRACT(YEAR FROM DATETIME(ts, "UTC-7")) AS play_year,
-  EXTRACT(MONTH FROM DATETIME(ts, "UTC-7")) AS play_month,
-  EXTRACT(DAYOFWEEK FROM DATETIME(ts, "UTC-7")) AS play_day_week,
-  EXTRACT(HOUR FROM DATETIME(ts, "UTC-7")) AS play_hour,
-  
+  DATE(ts, 'America/Mazatlan') AS play_date,
+  EXTRACT(YEAR FROM ts AT TIME ZONE 'America/Mazatlan') AS play_year,
+  EXTRACT(MONTH FROM ts AT TIME ZONE 'America/Mazatlan') AS play_month,
+  EXTRACT(DAYOFWEEK FROM ts AT TIME ZONE 'America/Mazatlan') AS play_day_week,
+  EXTRACT(HOUR FROM ts AT TIME ZONE 'America/Mazatlan') AS play_hour,
   -- Time of day classification
   CASE 
-    WHEN EXTRACT(HOUR FROM DATETIME(ts, "UTC-7")) BETWEEN 0 AND 5 THEN 'Night'
-    WHEN EXTRACT(HOUR FROM DATETIME(ts, "UTC-7")) BETWEEN 6 AND 11 THEN 'Morning'
-    WHEN EXTRACT(HOUR FROM DATETIME(ts, "UTC-7")) BETWEEN 12 AND 17 THEN 'Afternoon'
+    WHEN EXTRACT(HOUR FROM ts AT TIME ZONE 'America/Mazatlan') BETWEEN 0 AND 5 THEN 'Night'
+    WHEN EXTRACT(HOUR FROM ts AT TIME ZONE 'America/Mazatlan') BETWEEN 6 AND 11 THEN 'Morning'
+    WHEN EXTRACT(HOUR FROM ts AT TIME ZONE 'America/Mazatlan') BETWEEN 12 AND 17 THEN 'Afternoon'
     ELSE 'Evening'
   END AS time_of_day,
   
@@ -114,7 +117,7 @@ SELECT
 
 FROM deduplicated
 WHERE row_num = 1  -- Keeps only first occurrence of each duplicate group
-ORDER BY dt_MST;
+ORDER BY TIMESTAMP_SUB(ts, INTERVAL ms_played MILLISECOND), ts, spotify_track_uri;  -- Opted for milliseconds + URI tiebreaker due to repeated plays in same second (Identified in /docs/problems_session_construction.md)
 
 
 -- ================================================================
@@ -125,7 +128,7 @@ ORDER BY dt_MST;
 SELECT 
   'Duplicate Check' AS check_type,
   COUNT(*) - COUNT(DISTINCT CONCAT(
-    CAST(dt_MST AS STRING),
+    CAST(play_end_MST AS STRING),
     track_uri,
     CAST(ms_played AS STRING)
   )) AS remaining_duplicates
@@ -142,10 +145,10 @@ WHERE track_name IS NULL
 -- 3. Date range verification
 SELECT 
   'Date Range' AS metric,
-  MIN(dt_MST) AS earliest_play,
-  MAX(dt_MST) AS latest_play,
-  DATE_DIFF(DATE(MAX(dt_MST)), DATE(MIN(dt_MST)), DAY) AS days_span,
-  COUNT(DISTINCT DATE(dt_MST)) AS active_days
+  MIN(play_start_MST) AS earliest_play,
+  MAX(play_start_MST) AS latest_play,
+  DATE_DIFF(DATE(MAX(play_start_MST)), DATE(MIN(play_start_MST)), DAY) AS days_span,
+  COUNT(DISTINCT DATE(play_start_MST)) AS active_days
 FROM `robotic-door-487416-b4.spotify_analytics.streaming_history_clean`;
 
 -- 4. Top 10 artists (as sanity check)
@@ -189,3 +192,78 @@ ORDER BY
     WHEN 'Afternoon' THEN 3
     ELSE 4
   END;
+
+-- 7. Records removed
+SELECT 
+  'Data Cleaning Summary' AS metric,
+  (SELECT COUNT(*) FROM `robotic-door-487416-b4.spotify_analytics.streaming_history_raw` WHERE episode_name IS NULL) AS raw_music_plays,
+  COUNT(*) AS clean_plays,
+  (SELECT COUNT(*) FROM `robotic-door-487416-b4.spotify_analytics.streaming_history_raw` WHERE episode_name IS NULL) - COUNT(*) AS plays_removed,
+  ROUND(
+    ((SELECT COUNT(*) FROM `robotic-door-487416-b4.spotify_analytics.streaming_history_raw` WHERE episode_name IS NULL) - COUNT(*)) * 100.0 /
+    (SELECT COUNT(*) FROM `robotic-door-487416-b4.spotify_analytics.streaming_history_raw` WHERE episode_name IS NULL)
+    , 2) AS pct_removed
+FROM `robotic-door-487416-b4.spotify_analytics.streaming_history_clean`;
+
+-- 8. Remaining overlaps
+WITH overlaps AS (
+  SELECT 
+    play_start_MST,
+    device,
+    LAG(play_end_MST) OVER (ORDER BY play_start_MST, play_end_MST, track_uri) AS prev_end,
+    LAG(device) OVER (ORDER BY play_start_MST, play_end_MST, track_uri) AS prev_device,
+    TIMESTAMP_DIFF(
+      play_start_MST,
+      LAG(play_end_MST) OVER (ORDER BY play_start_MST, play_end_MST, track_uri),
+      SECOND
+    ) AS gap_seconds
+  FROM `robotic-door-487416-b4.spotify_analytics.streaming_history_clean`
+)
+SELECT 
+  'Remaining Overlaps Analysis' AS check_type,
+  COUNT(*) AS total_transitions,
+  COUNTIF(gap_seconds < 0) AS total_overlaps,
+  COUNTIF(gap_seconds < 0 AND device != prev_device) AS cross_device_overlaps,
+  COUNTIF(gap_seconds < 0 AND device = prev_device) AS same_device_overlaps,
+  COUNTIF(gap_seconds < -1800 AND device = prev_device) AS severe_same_device_overlaps,
+  ROUND(COUNTIF(gap_seconds < 0) * 100.0 / COUNT(*), 2) AS pct_general_overlap,
+  ROUND(COUNTIF(gap_seconds < 0 AND device != prev_device) * 100.0 / COUNT(*), 2) AS pct_cross_overlaps,
+  ROUND(COUNTIF(gap_seconds < 0 AND device = prev_device) * 100.0 / COUNT(*), 2) AS pct_same_overlaps,
+  ROUND(COUNTIF(gap_seconds < -1800 AND device = prev_device) * 100.0 / COUNT(*), 2) AS pct_severe_same_overlaps
+FROM overlaps
+WHERE prev_end IS NOT NULL;
+
+-- 9. Specific examples of 8
+WITH overlaps AS (
+  SELECT 
+    play_start_MST,
+    play_end_MST,
+    device,
+    track_name,
+    LAG(play_start_MST) OVER (ORDER BY play_start_MST) AS prev_start,
+    LAG(play_end_MST) OVER (ORDER BY play_start_MST) AS prev_end,
+    LAG(device) OVER (ORDER BY play_start_MST) AS prev_device,
+    LAG(track_name) OVER (ORDER BY play_start_MST) AS prev_track,
+    TIMESTAMP_DIFF(
+      play_start_MST,
+      LAG(play_end_MST) OVER (ORDER BY play_start_MST),
+      SECOND
+    ) AS gap_seconds
+  FROM `robotic-door-487416-b4.spotify_analytics.streaming_history_clean`
+)
+SELECT *
+FROM overlaps
+WHERE gap_seconds < -1800 
+  AND device = prev_device
+ORDER BY gap_seconds ASC
+LIMIT 20;
+
+-- 10. Top devices after cleaning
+SELECT 
+  device,
+  COUNT(*) AS plays,
+  ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) AS pct_of_total
+FROM `robotic-door-487416-b4.spotify_analytics.streaming_history_clean`
+GROUP BY device
+ORDER BY plays DESC
+LIMIT 10;
