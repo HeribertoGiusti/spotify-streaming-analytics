@@ -17,3 +17,4 @@ __pycache__/
 # Archivos temporales de Tableau
 *.twb~
 *.twbx~
+*.swp
