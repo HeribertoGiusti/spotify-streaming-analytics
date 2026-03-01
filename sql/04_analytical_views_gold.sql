@@ -50,7 +50,7 @@ SELECT
 -- COUNT(DISTINCT session_id) AS sessions_played_in,
   
   -- Listening time
-  ROUND(SUM(minutes_played), 2) AS total_minutes_listened,
+  ROUND(SUM(minutes_played) / 60, 2) AS total_hours_listened,
   ROUND(AVG(minutes_played), 2) AS avg_play_duration,
   
   -- Temporal patterns
@@ -189,12 +189,12 @@ ORDER BY play_year;
 
 -- VIEW 6: top_content
 
-WITH artist_rankings AS (
+WITH general_artist_rankings AS (
   SELECT 
     'All Time' AS time_period,
     CAST(NULL AS INT64) AS year,
     'Artist' AS content_type,
-    artist_name AS name,
+    artist_name,
     CAST(NULL AS STRING) AS track_name,
     COUNT(*) AS play_count,
     ROUND(SUM(hours_played), 2) AS total_hours,
@@ -209,7 +209,7 @@ yearly_artist_rankings AS (
     'Yearly' AS time_period,
     play_year AS year,
     'Artist' AS content_type,
-    artist_name AS name,
+    artist_name,
     CAST(NULL AS STRING) AS track_name,
     COUNT(*) AS play_count,
     ROUND(SUM(hours_played), 2) AS total_hours,
@@ -219,12 +219,12 @@ yearly_artist_rankings AS (
   QUALIFY rank <= 20
 ),
 
-track_rankings AS (
+general_track_rankings AS (
   SELECT 
     'All Time' AS time_period,
     CAST(NULL AS INT64) AS year,
     'Track' AS content_type,
-    artist_name AS name,
+    artist_name,
     track_name,
     COUNT(*) AS play_count,
     ROUND(SUM(hours_played), 2) AS total_hours,
@@ -232,11 +232,28 @@ track_rankings AS (
   FROM `spotify_analytics.streaming_history_clean`
   GROUP BY artist_name, track_name
   QUALIFY rank <= 50
+),
+
+yearly_track_rankings AS (
+  SELECT 
+    'Yearly' AS time_period,
+    play_year AS year,
+    'Track' AS content_type,
+    artist_name,
+    track_name,
+    COUNT(*) AS play_count,
+    ROUND(SUM(hours_played), 2) AS total_hours,
+    ROW_NUMBER() OVER (PARTITION BY play_year ORDER BY COUNT(*) DESC) AS rank
+  FROM `spotify_analytics.streaming_history_clean`
+  GROUP BY play_year, artist_name, track_name
+  QUALIFY rank <= 20
 )
 
-SELECT * FROM artist_rankings
+SELECT * FROM general_artist_rankings
 UNION ALL
 SELECT * FROM yearly_artist_rankings
 UNION ALL
-SELECT * FROM track_rankings
+SELECT * FROM general_track_rankings
+UNION ALL
+SELECT * FROM yearly_track_rankings
 ORDER BY time_period, year, content_type, rank;
