@@ -17,17 +17,17 @@
 --   - Using URI instead of track name allows for handling for tracks with identical names by different artists, or different versions with same title
 --
 -- ADDITIONAL CLEANING:
---   - Focuses on music by standardizing NULL handling for other type of streams
+--   - Focuses on music by standardizing NULL handling
 --   - Filters out impossible time values
 --   - Excludes December 2020 anomaly: >24 hours/day
 --   - Omits tracks with immediate skip because of 'ts' register bug they create
---   - Leaves out tracks that display severe overlap in ending-to-start times for same-device sessions
+--   - Leaves out tracks that display a severe overlap in their ending times in the same device
 --
 -- DEPENDENCIES:
 --   Input: `spotify_analytics.streaming_history_raw`
 --   Output: `spotify_analytics.streaming_history_clean`
 --
--- LAST UPDATED: 2026-02-22
+-- LAST UPDATED: 2025-03-01
 -- ================================================================
 
 -- Creates clean silver table for music only
@@ -67,8 +67,8 @@ deduplicated AS (
 
 SELECT 
   -- Time information
-  TIMESTAMP_TRUNC(TIMESTAMP_SUB(ts, INTERVAL ms_played MILLISECOND), SECOND, 'America/Mazatlan') AS play_start_MST,  -- This is because I've spent most of my time in -7 MST,
-  TIMESTAMP_TRUNC(ts, SECOND, 'America/Mazatlan') AS play_end_MST,
+  DATETIME_TRUNC(DATETIME_SUB(DATETIME(ts,'America/Mazatlan'), INTERVAL ms_played MILLISECOND), SECOND) as play_start_MST,  -- This is because I've spent most of my time in -7 MST
+  DATETIME(ts, 'America/Mazatlan') AS play_end_MST,
   ms_played,
 
   -- Music metadata
@@ -93,7 +93,7 @@ SELECT
   DATE(ts, 'America/Mazatlan') AS play_date,
   EXTRACT(YEAR FROM ts AT TIME ZONE 'America/Mazatlan') AS play_year,
   EXTRACT(MONTH FROM ts AT TIME ZONE 'America/Mazatlan') AS play_month,
-  EXTRACT(DAYOFWEEK FROM ts AT TIME ZONE 'America/Mazatlan') AS play_day_week,
+  FORMAT_DATE('%A', DATE(ts, 'America/Mazatlan')) AS play_day_week,
   EXTRACT(HOUR FROM ts AT TIME ZONE 'America/Mazatlan') AS play_hour,
   -- Time of day classification
   CASE 
@@ -233,7 +233,7 @@ SELECT
 FROM overlaps
 WHERE prev_end IS NOT NULL;
 
--- 9. Specific examples of 8
+-- 9. Specific examples
 WITH overlaps AS (
   SELECT 
     play_start_MST,
