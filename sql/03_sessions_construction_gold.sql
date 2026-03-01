@@ -1,15 +1,15 @@
 -- ================================================================
--- FILE: 03_sessions_construction_gold.sql
+-- FILE: 03_sessions_construction.sql
 -- PURPOSE: Construct listening sessions from individual plays
 -- CREATES: Table `spotify_analytics.sessions`
 -- ================================================================
 -- BUSINESS LOGIC:
---   Session = continuous listening period with gaps <30 minutes between each track
+--   Session = continuous listening period with gaps <30 minutes
 --   Based on EDA findings: 95% of plays occur within 30-min windows
 --
 -- METHODOLOGY:
 --   1. Calculate time gap between consecutive plays using LAG()
---   2. Flag new session starts when gap >30 minutes
+--   2. Flag new session starts (gap >30 min or first play)
 --   3. Assign unique session_id using cumulative SUM()
 --   4. Aggregate plays into session-level metrics
 --
@@ -24,9 +24,10 @@
 -- ADVANCED SQL TECHNIQUES DEMONSTRATED:
 --   - LAG() window function for time series analysis
 --   - Cumulative SUM() with UNBOUNDED PRECEDING for ID generation
---   - TIMESTAMP_DIFF() for temporal calculations
+--   - DATETIME_DIFF() for temporal calculations
+--   - APPROX_QUANTILES() for choosing right thresholds
 --   - Multiple CTEs for complex logic breakdown
---   - QUALIFY clauses for window function filtering
+--   - QUALIFY clause for window function filtering
 --
 -- TABLEAU USAGE:
 --   - Base table for: Network graph, engagement analysis, temporal patterns
@@ -36,10 +37,10 @@
 --   Input: `spotify_analytics.streaming_history_clean`
 --   Output: `spotify_analytics.sessions`
 --
--- LAST UPDATED: 2026-02-22
+-- LAST UPDATED: 2026-03-01
 -- ================================================================
 
--- Creates sessions table
+-- Create sessions table
 CREATE OR REPLACE TABLE `robotic-door-487416-b4.spotify_analytics.sessions` AS
 
 -- ============================================================
@@ -48,7 +49,7 @@ CREATE OR REPLACE TABLE `robotic-door-487416-b4.spotify_analytics.sessions` AS
 WITH time_gaps AS (
   SELECT
    *,
-   TIMESTAMP_DIFF(
+   DATETIME_DIFF(
      play_start_MST,
      LAG(play_end_MST) OVER (ORDER BY play_start_MST, play_end_MST, track_uri),
      SECOND) AS seconds_since_last_play
@@ -93,8 +94,8 @@ session_aggregations AS (
     -- Temporal boundaries
     MIN(play_start_MST) AS session_start,
     MAX(play_end_MST) AS session_end,
-    TIMESTAMP_DIFF(MAX(play_end_MST), MIN(play_start_MST), SECOND) AS session_duration_seconds,
-    ROUND(TIMESTAMP_DIFF(MAX(play_end_MST), MIN(play_start_MST), SECOND) / 60.0, 2) AS session_duration_minutes,
+    DATETIME_DIFF(MAX(play_end_MST), MIN(play_start_MST), SECOND) AS session_duration_seconds,
+    ROUND(DATETIME_DIFF(MAX(play_end_MST), MIN(play_start_MST), SECOND) / 60.0, 2) AS session_duration_minutes,
 
     -- Play counts
     COUNT(*) AS tracks_played,
@@ -145,14 +146,14 @@ session_classification AS (
       ELSE 'Marathon (>3 hours)'
     END AS session_length_category,
 
-    -- Session category by behavior
+    -- Session category by behavior (The logic for the thresholds is outlined in /docs/problems_session_construction.md)
     CASE
-      WHEN skip_rate > 50 AND shuffle_usage_pct > 70 THEN 'Active Search' -- Extreme case of pickiness
-      WHEN shuffle_usage_pct > 80 THEN 'Discovery Mode'
-      WHEN weighted_diversity_score > 0.7 THEN 'Variety Seeker'  -- Variety of artists in the session
-      WHEN diversity_score < 0.3 AND completion_rate > 80 THEN 'Album Listening'
-      WHEN diversity_score < 0.3 THEN 'Deep Dive on Artist'
-      ELSE 'Focused Listening'
+      WHEN skip_rate > 33.33 AND shuffle_usage_pct > 90 THEN 'Active Search'
+      WHEN shuffle_usage_pct > 90 THEN 'Discovery Mode'
+      WHEN weighted_diversity_score > 0.74 THEN 'Variety Seeker'
+      WHEN weighted_diversity_score < 0.20 AND completion_rate > 75 THEN 'Album Listening'
+      WHEN weighted_diversity_score < 0.20 THEN 'Deep Dive on Artist'
+      ELSE 'Balanced Session'
     END AS session_type,
     
     -- Engagement level
