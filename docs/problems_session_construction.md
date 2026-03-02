@@ -10,8 +10,9 @@ This document tracks data quality problems identified during the analytical 'ses
 |----------|-----------|------------|----------|
 |  DQ-001  |   High    | 2026-02-17 | Resolved |
 |  DQ-002  |  Medium   | 2026-02-17 | Resolved |
-|  DQ-003  |   Low     | 2025-02-17 | Resolved |
-|  DQ-004  | Very High | 2025-02-17 | Resolved |
+|  DQ-003  |   Low     | 2026-02-17 | Resolved |
+|  DQ-004  | Very High | 2026-02-17 | Resolved |
+|  DQ-005  | Very High | 2026-02-28 | Resolved |
 
 ---
 
@@ -157,9 +158,100 @@ c) Three-level tiebreaker in silver table final SELECT: ORDER BY TIMESTAMP_SUB(t
 
 ---
 
+### DQ-005: Session types not representative of data distribution 
+**Severity:** Very High  
+**Status:** ✅ Resolved 
+**Discovered:**
+SELECT 
+  -- Percentiles of skip_rate
+  APPROX_QUANTILES(skip_rate, 100)[OFFSET(10)] AS skip_rate_p10,
+  APPROX_QUANTILES(skip_rate, 100)[OFFSET(25)] AS skip_rate_p25,
+  APPROX_QUANTILES(skip_rate, 100)[OFFSET(50)] AS skip_rate_p50,
+  APPROX_QUANTILES(skip_rate, 100)[OFFSET(75)] AS skip_rate_p75,
+  APPROX_QUANTILES(skip_rate, 100)[OFFSET(90)] AS skip_rate_p90,
+  
+  -- Percentiles of shuffle_usage_pct
+  APPROX_QUANTILES(shuffle_usage_pct, 100)[OFFSET(10)] AS shuffle_p10,
+  APPROX_QUANTILES(shuffle_usage_pct, 100)[OFFSET(25)] AS shuffle_p25,
+  APPROX_QUANTILES(shuffle_usage_pct, 100)[OFFSET(50)] AS shuffle_p50,
+  APPROX_QUANTILES(shuffle_usage_pct, 100)[OFFSET(75)] AS shuffle_p75,
+  APPROX_QUANTILES(shuffle_usage_pct, 100)[OFFSET(90)] AS shuffle_p90,
+  
+  -- Percentiles of diversity_score
+  APPROX_QUANTILES(diversity_score, 100)[OFFSET(10)] AS diversity_p10,
+  APPROX_QUANTILES(diversity_score, 100)[OFFSET(25)] AS diversity_p25,
+  APPROX_QUANTILES(diversity_score, 100)[OFFSET(50)] AS diversity_p50,
+  APPROX_QUANTILES(diversity_score, 100)[OFFSET(75)] AS diversity_p75,
+  APPROX_QUANTILES(diversity_score, 100)[OFFSET(90)] AS diversity_p90,
+  
+  -- Percentiles of weighted_diversity_score
+  APPROX_QUANTILES(weighted_diversity_score, 100)[OFFSET(10)] AS weighted_div_p10,
+  APPROX_QUANTILES(weighted_diversity_score, 100)[OFFSET(25)] AS weighted_div_p25,
+  APPROX_QUANTILES(weighted_diversity_score, 100)[OFFSET(50)] AS weighted_div_p50,
+  APPROX_QUANTILES(weighted_diversity_score, 100)[OFFSET(75)] AS weighted_div_p75,
+  APPROX_QUANTILES(weighted_diversity_score, 100)[OFFSET(90)] AS weighted_div_p90,
+  
+  -- Percentiles of completion_rate
+  APPROX_QUANTILES(completion_rate, 100)[OFFSET(10)] AS completion_p10,
+  APPROX_QUANTILES(completion_rate, 100)[OFFSET(25)] AS completion_p25,
+  APPROX_QUANTILES(completion_rate, 100)[OFFSET(50)] AS completion_p50,
+  APPROX_QUANTILES(completion_rate, 100)[OFFSET(75)] AS completion_p75,
+  APPROX_QUANTILES(completion_rate, 100)[OFFSET(90)] AS completion_p90
+
+FROM `robotic-door-487416-b4.spotify_analytics.sessions`;
+
+**Description:**
+During the construction of the field 'session_type', the categories and thresholds of them were firstly speculated through the personal knowledge of my different types of listening behavior. However, an iteration had to be made once other problems with the data were fixed, in order to know the most precise and adequate way to classify the listening sessions.
+
+**Root Cause:**
+A discrepancy between the theoretical and the real data is to be expected in these cases, and this is why some categories were, in my interpretation, less represented than others.
+
+**Proposed Resolution:**
+An statistical analysis of the data distribution for the sessions, in the many metrics available, revealed important insigths. Some thresholds were found to be either very restrictive (not capturing sufficient information) or very broad (capturing too much and thus making the category system useless). An adjustment of the thresholds in order to capture the bottom and the top percentiles is proposed.
+
+|  10% of data |  25% of data |  50% of data |  75% of data |	 90% of data |
+|--------------|--------------|--------------|--------------|--------------|
+| skip_rate_p10| skip_rate_p25| skip_rate_p50| skip_rate_p75| skip_rate_p90|
+|       0      |     	 0      |	      0	     |    33.33     |    66.67     |
+| shuffle_p10	 | shuffle_p25  | shuffle_p50	 | shuffle_p75	| shuffle_p90  |
+|       0	     |    33.33     |    	 100	   |     100	    |     100      |
+|diversity_p10 |diversity_p25 |diversity_p50 |diversity_p75 |diversity_p90 |
+|     0.27	   |      0.6     |  	  0.86     |   	  1       |      1       |
+|weight_div_p10|weight_div_p25|weight_div_p50|weight_div_p75|weight_div_p90|
+|      0.1	   |      0.2	    |      0.4	   |    0.74	    |     0.9      | 
+|completion_p10|completion_p25|completion_p50|completion_p75|completion_p90|
+|       0      |     32.26    |      50      |    	75      |	    100      |
+
+**Resolution Changes:**  
+- Active Search: Sessions with very high shuffle usage and also high skip rate, were I was trying to find a specific song or genre that pleased my ears in that moment. The previous skip rate threshold included less than 10% of the sessions, so it had to be lowered, but the shuffle one raised for compensation.
+  * Before: skip > 50 AND shuffle > 70
+  * After: skip > 33.33 AND shuffle > 90
+
+- Discovery Mode: Sessions with very high shuffle mode on, but where I didn't skipped and instead trusted the algorithm. It was found that my listening behavior is very bimodal, that is to say, a few sessions are completely devoid of shuffle usage, but most have most of their songs played in that mode. As with the previous condition, it had to be raised in order to more clearly distinguish the two types of shuffle usage (non-existent or very high).
+  * Before: shuffle > 80
+  * After: shuffle > 90
+
+- Variety Seeker: These sessions are distinguished by the high diversity of the artists in them. The weighted_diversity score was designed in order to penalize very short sessions with few artists, were the score can be high but irrelevant. It was found that this metric followed a Normal distribution, so the threshold was just slightly altered in order to fit it more properly and capture exactly the top quartile of sessions.
+  * Before: weighted_diversity > 0.7
+  * After: weighted_diversity > 0.74
+
+- Album Listening: A metric that captures sessions that are mostly or completely from one artist, and the completion of its songs is very high, which suggests that the listener is playing an entire album. The original diversity score was replaced with the weighted one and the threshold was fixed so that it captures the botom 25% of the data, that is, the less diverse sessions.
+  * Before: diversity < 0.3 AND completion > 80
+  * After: weighted_diversity < 0.20 AND completion > 75
+
+- Deep Dive on Artist: This metric is also for sessions focused on one artist, but skipped more often probably because I played them from my 'Saved tracks' of that artist, either on shuffle or sequential mode.
+  * Before: diversity < 0.3
+  * After: weighted_diversity < 0.20
+
+- Balanced Session: Captures the rest of the sessions that weren't included in the previous categories, that is to say, the ones that display average behaviors.
+  * Before and After: It was part of the ELSE clause and remained so.
+
+---
+
 ## Lessons Learned
 
 1. **Play start not included:** The original data only measures a track's ending timestamp, so it had to be calculated up to the millisecond to allow for a complete analysis.
 2. **API lag problem:** There were many cases were the ending time of a song overlapped with the start of another one, which is a technical registering problem that cannot be avoided but can be minimized.
 3. **Timestamp ordering:** Because of the lag issues, the ordering for the session construction window functions had to be millisecond specific and include the track URI, so there are no ties.
 4. **Types of overlapping:** It was found that the small amount of cross-device overlaps are to be expected, and that severe same-device ones can be handled with the corresponding conditions. Most importantly: the remaining same- and cross-device overlaps don't interfere with the sessions construction because of the applied length conditions.
+5. **My listening profile:** Several characteristics of my listening behavior became evident, like that at least half of the sessions have an extremely high artist diversity (0.86); also at least half of them have a 0 skip rate, which means I can be seen as a "committed explorer". Other discoveries were that the shuffle behavior is bimodal, with some sessions having 0% of it while the majority having nearly 100%, with few in between. 
