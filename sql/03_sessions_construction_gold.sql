@@ -134,7 +134,7 @@ session_classification AS (
     DATE(session_start) AS session_date,
     EXTRACT(YEAR FROM session_start) AS session_year,
     EXTRACT(MONTH FROM session_start) AS session_month,
-    EXTRACT(DAYOFWEEK FROM session_start) AS session_day_of_week,
+    FORMAT_DATE('%A', DATE(session_start)) AS session_day_of_week,
     EXTRACT(HOUR FROM session_start) AS session_start_hour,
 
     -- Session category by length
