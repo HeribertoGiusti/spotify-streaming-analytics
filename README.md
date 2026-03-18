@@ -64,7 +64,7 @@ See [Data Pipeline Documentation](docs/data_pipeline.md) for details.
 
 ## 🎨 Tableau Dashboard
 
-[alt text](imagen.png)
+![alt text](imagen.png)
 
 ## 🔍 SQL Techniques Demonstrated
 
