@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the end-to-end data pipeline for the Spotify Streaming Analytics project, from 17 raw JSON files to 6 dynamic dashboards in Tableau.
+This document describes the end-to-end data pipeline for the Spotify Streaming Analytics project, from 17 raw JSON files to 4 dynamic dashboards in Tableau.
 
 ---
 
@@ -245,7 +245,7 @@ sessions
 ├── session_date (DATE)
 ├── session_year (INT64)
 ├── session_month (INT64)
-├── session_day_of_week (INT64)
+├── session_day_of_week (STRING)
 ├── session_start_hour (INT64)
 ├── session_duration_seconds (INT64)
 ├── session_duration_minutes (FLOAT64)
@@ -360,7 +360,7 @@ Columns:
 
 ### Export Method
 ```
-BigQuery Sessions Table and Views → Tableau Desktop 'Google BigQuery' Connector
+BigQuery Clean and Sessions Tables, and 6 Views → Tableau Public by importing local CSVs (it was first designed in Tableau Desktop with the 'Google BigQuery' Connector)
 ```
 
 ### Export Process
@@ -369,7 +369,7 @@ BigQuery Sessions Table and Views → Tableau Desktop 'Google BigQuery' Connecto
    - Repeat for all 6 views
 
 2. **Tableau Desktop**:
-   - Workbook → Data → Connect → Google BigQuery
+   - Workbook → Data → Import Local File
    - Select and extract each table, one by one
    - Create visualizations and dashboards
    - Update views after optimizations
@@ -399,7 +399,7 @@ BigQuery Sessions Table and Views → Tableau Desktop 'Google BigQuery' Connecto
 ### Tableau Optimization
 - **Extracts**: Live connections are not necessary nor possible
 - **Aggregation**: Pre-aggregated in views (gold layer)
-- **Calculations**: All calculated fields are done in BigQuery
+- **Calculations**: Almost all calculated fields are done in BigQuery
 - **Filters**: No date or any other filters in extract settings
 
 ---
