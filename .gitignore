@@ -1,9 +1,9 @@
-# Datos personales (NO subir a GitHub)
+# Personal listening streaming history
+data/
 *.json
 *.jsonl
-data/
 
-# Credenciales de Google Cloud
+# Credentials for Google Cloud
 credentials/
 *-key.json
 
@@ -11,10 +11,10 @@ credentials/
 __pycache__/
 *.pyc
 
-# Sistema operativo
+# Operating System
 .DS_Store
 
-# Archivos temporales de Tableau
+# Temporal Tableau Files
 *.twb~
 *.twbx~
 *.swp
