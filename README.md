@@ -1,6 +1,6 @@
 # 🎵 Spotify Streaming Analytics Portfolio
 
-> Advanced data analytics project demonstrating BigQuery expertise, SQL window functions, and business intelligence with Tableau.
+> Advanced data analytics project combining Python scripting, BigQuery transformation and querying techniques, and Tableau dynamic visualizations, for replicating a professional scenario were a data pipeline needs to be constructed in order to generate some business intelligence.
 
 [![BigQuery](https://img.shields.io/badge/BigQuery-4285F4?style=flat&logo=google-cloud&logoColor=white)](https://cloud.google.com/bigquery)
 [![Tableau](https://img.shields.io/badge/Tableau-E97627?style=flat&logo=tableau&logoColor=white)](https://www.tableau.com/)
@@ -8,7 +8,7 @@
 
 ## 📊 Project Overview
 
-Analysis of my Spotify streaming history to uncover listening patterns and behavioral insights using advanced analytics techniques.
+Analysis of my Spotify streaming history to uncover listening patterns and behavioral insights using advanced SQL techniques.
 
 **Key Focus Areas:**
 - 🎯 User engagement and retention metrics
@@ -30,20 +30,18 @@ Analysis of my Spotify streaming history to uncover listening patterns and behav
 ## 📁 Project Structure
 ```
 spotify-streaming-analytics/
-├── sql/                              # BigQuery SQL queries
-│   ├── 01_exploratory_analysis.sql   # Initial data exploration
-|   ├── 02_data_cleaning_silver.sql   # Creation of clean table
-|   ├── 03_sessions.sql   # Creation of sessions table
-│   └── 04_analytics_transformations.sql # Advanced transformations
-├── python/                           # Data processing scripts
-│   └── convert_to_jsonl.py          # JSON to JSONL converter
-├── docs/                            # Documentation
-│   ├── data_pipeline.md            # Data ingestion pipeline
-│   └── technical_documentation.md   # Technical deep dive
-├── tableau/                         # Tableau assets
-│   └── screenshots/                # Dashboard images
-├── presentation/                    # Executive presentations
-└── README.md                       # This file
+├── sql/                                     # BigQuery SQL queries
+│   ├── 01_exploratory_analysis_bronze.sql     # Initial data exploration (EDA)
+|   ├── 02_data_cleaning_silver.sql            # Creation of clean table
+|   ├── 03_sessions_construction_gold.sql      # Creation of sessions table
+│   └── 04_analytical_views_gold.sql           # Advanced transformations
+├── python/                                  # Data processing script
+│   └── convert_to_jsonl.py                    # JSON to JSONL converter
+├── docs/                                    # Documentation
+│   ├── data_pipeline.md                       # Data ingestion pipeline
+│   ├── exploratory_findings.md                # Results from SQL EDA
+|   └── problems_session_construction.md       # Logs for problems resolution
+└── README.md                                # This file
 ```
 
 ## 🚀 Quick Start
@@ -51,7 +49,7 @@ spotify-streaming-analytics/
 ### Prerequisites
 - Google Cloud Platform account
 - BigQuery dataset access
-- Tableau Desktop
+- Tableau Public
 - Python 3.8+
 
 ### Data Pipeline
@@ -64,20 +62,9 @@ spotify-streaming-analytics/
 
 See [Data Pipeline Documentation](docs/data_pipeline.md) for details.
 
-## 📈 Key Insights & Metrics
-
-*Coming soon - Analysis in progress*
-
-### Sample Metrics Calculated:
-- Session duration and continuity analysis
-- Content completion rates and skip behavior
-- Artist/track retention curves
-- Discovery vs. repetition patterns
-- Platform-specific engagement metrics
-
 ## 🎨 Tableau Dashboard
 
-*Dashboard screenshots and Tableau Public link coming soon*
+[alt text](imagen.png)
 
 ## 🔍 SQL Techniques Demonstrated
 
@@ -87,11 +74,6 @@ See [Data Pipeline Documentation](docs/data_pipeline.md) for details.
 - **Aggregations**: Advanced grouping with PARTITION BY
 - **Date/Time Functions**: Temporal analysis and session construction
 - **JSON Parsing**: Handling nested data structures
-
-## 📚 Documentation
-
-- [Data Pipeline](docs/data_pipeline.md) - Complete data flow from source to warehouse
-- [Technical Documentation](docs/technical_documentation.md) - SQL queries and methodology
 
 ## 👤 Author
 
@@ -109,3 +91,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Spotify for providing personal data export functionality
 - Google Cloud Platform for BigQuery and storage infrastructure
+- Tableau Public for enabling their free platform
